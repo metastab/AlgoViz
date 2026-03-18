@@ -5,13 +5,13 @@
 ![Canvas](https://img.shields.io/badge/Canvas-2D%20Rendering-blue?style=for-the-badge)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-Utility%20First-38B2AC?style=for-the-badge&logo=tailwindcss)
 
-## Idea
+## → Idea
 
 Instead of just reading algorithms, users can **build their own structures** (like trees or graphs) and watch how algorithms (like BFS) work on them in real time.
 
 ---
 
-## How It Works
+## → How It Works
 
 1. **Create Nodes**
 
@@ -38,7 +38,7 @@ Instead of just reading algorithms, users can **build their own structures** (li
 
 ---
 
-## Core Components
+## → Core Components
 
 * **Atlas / Workspace** → Manages grid and nodes
 * **Solver** → Runs algorithms (BFS, DFS, etc.)
@@ -49,7 +49,7 @@ Instead of just reading algorithms, users can **build their own structures** (li
 
 ---
 
-## Features
+## → Features
 
 * Interactive grid system
 * Step-by-step algorithm visualization
@@ -59,13 +59,13 @@ Instead of just reading algorithms, users can **build their own structures** (li
 
 ---
 
-## Goal
+## → Goal
 
 To make algorithms easier to understand by turning them into **visual, interactive experiences** instead of just code.
 
 ---
 
-## Tech Stack
+## → Tech Stack
 
 * HTML Canvas
 * JavaScript
@@ -73,7 +73,7 @@ To make algorithms easier to understand by turning them into **visual, interacti
 
 ---
 
-## Future Scope
+## → Future Scope
 
 * More algorithms (DFS, Dijkstra, A*)
 * Better UI/UX
