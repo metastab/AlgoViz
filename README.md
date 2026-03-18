@@ -40,12 +40,12 @@ Instead of just reading algorithms, users can **build their own structures** (li
 
 ## Core Components
 
-* **Atlas** → Manages grid and nodes
+* **Atlas / Workspace** → Manages grid and nodes
 * **Solver** → Runs algorithms (BFS, DFS, etc.)
-* **Nova** → Executes algorithm steps
-* **Pulse** → Controls simulation timing
-* **Echo** → Renders visuals on canvas
-* **Lune** → Logs each step of the process
+* **Nova / Worker** → Executes algorithm steps
+* **Pulse / MainLoop** → Controls simulation timing
+* **Echo / RenderLoop** → Renders visuals on canvas
+* **Lune / LoggerLoop** → Logs each step of the process
 
 ---
 
