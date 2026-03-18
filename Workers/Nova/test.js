@@ -1,0 +1,1 @@
+console.log("Nova is loaded properly.")

@@ -1,0 +1,1 @@
+console.log("Atlas is loaded properly.")
