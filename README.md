@@ -1,16 +1,17 @@
-# 🧠 AlgoViz – Algorithm Visualization Simulator
+![Status](https://img.shields.io/badge/status-active-brightgreen?style=for-the-badge)
 
-AlgoViz is a simple web-based simulator that helps visualize how algorithms work step by step using an interactive grid system.
+![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow?style=for-the-badge&logo=javascript)
+![HTML5](https://img.shields.io/badge/HTML5-Markup-orange?style=for-the-badge&logo=html5)
+![Canvas](https://img.shields.io/badge/Canvas-2D%20Rendering-blue?style=for-the-badge)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-Utility%20First-38B2AC?style=for-the-badge&logo=tailwindcss)
 
----
-
-## 🚀 Idea
+## → Idea
 
 Instead of just reading algorithms, users can **build their own structures** (like trees or graphs) and watch how algorithms (like BFS) work on them in real time.
 
 ---
 
-## 🧩 How It Works
+## → How It Works
 
 1. **Create Nodes**
 
@@ -37,27 +38,18 @@ Instead of just reading algorithms, users can **build their own structures** (li
 
 ---
 
-## ⚙️ System Flow
+## → Core Components
 
-```
-User Input → Grid (Atlas) → Algorithm (Solver) → Execution (Nova) 
-→ Game Loop (Pulse) → Rendering (Echo) → Logs (Lune)
-```
-
----
-
-## 🧬 Core Components
-
-* **Atlas** → Manages grid and nodes
+* **Atlas / Workspace** → Manages grid and nodes
 * **Solver** → Runs algorithms (BFS, DFS, etc.)
-* **Nova** → Executes algorithm steps
-* **Pulse** → Controls simulation timing
-* **Echo** → Renders visuals on canvas
-* **Lune** → Logs each step of the process
+* **Nova / Worker** → Executes algorithm steps
+* **Pulse / MainLoop** → Controls simulation timing
+* **Echo / RenderLoop** → Renders visuals on canvas
+* **Lune / LoggerLoop** → Logs each step of the process
 
 ---
 
-## 🎯 Features
+## → Features
 
 * Interactive grid system
 * Step-by-step algorithm visualization
@@ -67,13 +59,13 @@ User Input → Grid (Atlas) → Algorithm (Solver) → Execution (Nova)
 
 ---
 
-## 📌 Goal
+## → Goal
 
 To make algorithms easier to understand by turning them into **visual, interactive experiences** instead of just code.
 
 ---
 
-## 🛠️ Tech Stack
+## → Tech Stack
 
 * HTML Canvas
 * JavaScript
@@ -81,22 +73,8 @@ To make algorithms easier to understand by turning them into **visual, interacti
 
 ---
 
-## 👥 Team
-
-Built collaboratively with a modular approach where each member handles a specific part of the system.
-
----
-
-## ✨ Future Scope
+## → Future Scope
 
 * More algorithms (DFS, Dijkstra, A*)
 * Better UI/UX
 * Save/load structures
-
----
-
-## 📜 Summary
-
-AlgoViz turns algorithms into something you can **see, control, and understand** step by step.
-
----
