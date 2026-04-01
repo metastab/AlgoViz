@@ -4,33 +4,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AlgoViz — interactive binary tree builder and algorithm visualizer">
 
     <link rel="icon" type="image/x-icon" href="/Assets/images/AlgoVizLogo.ico">
     <title>AlgoViz</title>
+
+    <!-- stylesheets -->
+    <link rel="stylesheet" href="Workers/Atlas/atlas.css">
 </head>
 
 <body>
 
+    <div class="ui-container">
+
+        <div class="canvas-container">
+
+            <!-- canvas wrapper provides border + glow + absolute controls -->
+            <div class="canvas-wrapper">
+                <canvas id="atlas-canvas"></canvas>
+
+                <!-- bottom-right controls bar -->
+                <div class="atlas-controls">
+
+                    <!-- Algorithm selector -->
+                    <div class="atlas-algo-selector">
+                        <label for="atlas-algo-select" class="atlas-algo-label">Algorithm</label>
+                        <div class="atlas-select-wrapper">
+                            <select id="atlas-algo-select">
+                                <optgroup label="Breadth-First">
+                                    <option value="bfs">BFS — Level Order</option>
+                                </optgroup>
+                                <optgroup label="Depth-First">
+                                    <option value="dfs-inorder">DFS — In-order</option>
+                                    <option value="dfs-preorder">DFS — Pre-order</option>
+                                    <option value="dfs-postorder">DFS — Post-order</option>
+                                </optgroup>
+                            </select>
+                            <span class="atlas-select-arrow">▾</span>
+                        </div>
+                    </div>
+
+                    <button id="atlas-submit-btn">Run &amp; Submit</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="logger-container">
+            <div id="logger"></div>
+        </div>
+
+    </div>
 
     <!-- event bus -->
     <script src="bus.js"></script>
 
-    <!-- worker scripts  -->
-    <script src="Workers/Atlas/test.js"></script>
+    <!-- Atlas worker (load order matters) -->
+    <script src="Workers/Atlas/state.js"></script>
+    <script src="Workers/Atlas/layout.js"></script>
+    <script src="Workers/Atlas/renderer.js"></script>
+    <script src="Workers/Atlas/input.js"></script>
+    <script src="Workers/Atlas/atlas.js"></script>
+
+    <!-- other worker stubs -->
     <script src="Workers/Nova/test.js"></script>
     <script src="Workers/Solver/test.js"></script>
 
-    <!-- visual scripts  -->
+    <!-- visual scripts -->
     <script src="Visual/Lune/test.js"></script>
     <script src="Visual/Echo/test.js"></script>
 
-    <!-- core game loop  -->
+    <!-- core game loop -->
     <script src="core.js"></script>
 
-    <!-- bootstrapping scripts  -->
+    <!-- bootstrapping scripts -->
     <script src="init.js"></script>
-
-
 
 </body>
 
