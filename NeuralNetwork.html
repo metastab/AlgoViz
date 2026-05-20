@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Neural Network Visualizer</title>
+    <style>
+        :root {
+            /* Dark Theme (Default) */
+            --bg-base: #0f172a;
+            --bg-panel: #1e293b;
+            --bg-input: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-danger: #ef4444;
+            --accent-success: #22c55e;
+            --accent-warn: #f59e0b;
+            
+            /* Canvas Colors */
+            --node-input: #8b5cf6;
+            --node-hidden: #3b82f6;
+            --node-output: #10b981;
+            --node-bg: #1e293b;
+            --edge-pos: #3b82f6;
+            --edge-neg: #ef4444;
+            --edge-neutral: #cbd5e1;
+            
+            /* Highlight Colors */
+            --highlight-node: #f59e0b;
+            --highlight-glow: rgba(245, 158, 11, 0.6);
+        }
+
+        body.light-mode {
+            /* Light Theme */
+            --bg-base: #f1f5f9;
+            --bg-panel: #ffffff;
+            --bg-input: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --border-color: #cbd5e1;
+            
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-danger: #dc2626;
+            --accent-success: #16a34a;
+            --accent-warn: #d97706;
+            
+            --node-input: #7c3aed;
+            --node-hidden: #2563eb;
+            --node-output: #059669;
+            --node-bg: #ffffff;
+            --edge-pos: #2563eb;
+            --edge-neg: #dc2626;
+            --edge-neutral: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevent body scroll for app-like feel */
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 1.5rem;
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 10;
+        }
+
+        h1 { font-size: 1.15rem; font-weight: 600; }
+
+        .header-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: opacity 0.2s, background-color 0.2s;
+        }
+        .btn:hover:not(:disabled) { background-color: var(--accent-hover); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+        .btn-outline:hover:not(:disabled) { background: var(--bg-input); }
+        
+        .btn-warn { background-color: var(--accent-warn); color: white; border: none; }
+        .btn-warn:hover:not(:disabled) { background-color: #d97706; }
+
+        .app-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebars optimized for laptops */
+        .sidebar {
+            width: 280px; /* Reduced for better laptop fit */
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+        .sidebar.right {
+            border-right: none;
+            border-left: 1px solid var(--border-color);
+            width: 300px;
+        }
+
+        .panel-section {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .panel-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.8rem;
+            font-weight: 700;
+        }
+
+        .control-group {
+            margin-bottom: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .control-group label {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .number-input {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.3rem;
+            border-radius: 4px;
+            width: 60px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .main-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background-color: var(--bg-base);
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            flex: 1;
+            position: relative;
+            min-height: 0;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .canvas-overlay-text {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: var(--bg-panel);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-size: 0.8rem;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        /* Logger designed to flex perfectly on laptops */
+        .logger-container {
+            height: 30vh; /* Responsive height */
+            min-height: 150px;
+            max-height: 300px;
+            background-color: var(--bg-panel);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+        .logger-header {
+            padding: 0.4rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logger-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.8rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .log-entry {
+            padding: 0.5rem;
+            background-color: var(--bg-input);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent);
+            line-height: 1.4;
+        }
+        .log-math { border-left-color: #f59e0b; }
+        .log-result { border-left-color: var(--accent-success); background-color: rgba(34, 197, 94, 0.05); }
+
+        /* Property Editor */
+        .editor-empty {
+            color: var(--text-muted);
+            text-align: center;
+            padding: 2rem 0;
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+        .weight-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: var(--bg-input);
+            padding: 0.4rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+        .weight-row label { font-size: 0.75rem; font-family: monospace; }
+        .weight-input { width: 70px; font-size: 0.8rem; }
+
+    </style>
+</head>
+<body class="light-mode">
+
+    <header>
+        <div class="header-title-area">
+            <h1>Neural Network Visualizer</h1>
+        </div>
+        <div class="header-controls">
+            <button id="themeToggleBtn" class="btn btn-outline" title="Toggle Theme">🌙</button>
+            <div style="width: 1px; height: 24px; background: var(--border-color); margin: 0 0.5rem;"></div>
+            <button id="runPassBtn" class="btn">▶ Run</button>
+            <button id="playPauseBtn" class="btn btn-outline" disabled>⏸ Pause</button>
+            <button id="stepBtn" class="btn btn-outline" disabled>⏭ Step</button>
+        </div>
+    </header>
+
+    <div class="app-body">
+        
+        <!-- Left Sidebar: Architecture Controls -->
+        <aside class="sidebar left">
+            <div class="panel-section">
+                <div class="panel-title">Architecture Settings</div>
+                
+                <div class="control-group">
+                    <label>Input Nodes</label>
+                    <input type="number" id="inp-inputs" class="number-input" value="2" min="1" max="6">
+                </div>
+                
+                <div class="control-group">
+                    <label>Hidden Layers</label>
+                    <input type="number" id="inp-layers" class="number-input" value="2" min="0" max="4">
+                </div>
+                
+                <div id="hidden-layers-container">
+                    <!-- Generated via JS -->
+                </div>
+
+                <div class="control-group" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-color);">
+                    <label>Output Nodes</label>
+                    <input type="number" id="inp-outputs" class="number-input" value="1" min="1" max="4">
+                </div>
+            </div>
+            
+            <div class="panel-section" style="flex: 1;">
+                <div class="panel-title">Instructions</div>
+                <ul style="font-size: 0.8rem; color: var(--text-muted); padding-left: 1.2rem; line-height: 1.5;">
+                    <li>Change values above to auto-update architecture.</li>
+                    <li><b>Click any node</b> to edit its properties.</li>
+                    <li>Click <b>Run</b> to start simulation.</li>
+                    <li>Use <b>Pause</b> and <b>Step</b> to walk through calculations manually.</li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main View: Canvas & Execution Log -->
+        <main class="main-view">
+            <div id="canvas-container">
+                <div class="canvas-overlay-text">Click a node to edit weights/bias</div>
+                <canvas id="nnCanvas"></canvas>
+            </div>
+            
+            <div class="logger-container">
+                <div class="logger-header">
+                    <span>Execution Log</span>
+                    <button id="clearLogBtn" class="btn btn-outline" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">Clear</button>
+                </div>
+                <div class="logger-content" id="loggerContent">
+                    <div class="log-entry">System initialized. Waiting for execution...</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar: Properties Editor -->
+        <aside class="sidebar right">
+            <div class="panel-section">
+                <div class="panel-title">Node Editor</div>
+                <div id="editor-container">
+                    <div class="editor-empty">Select a node on the canvas to view and edit its properties.</div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <script>
+        // --- Core State ---
+        let architecture = []; // Array of integers [input, hidden1, hidden2, output]
+        let nodes = []; // Holds node objects {id, layer, index, x, y, bias, value, preAct, label, type, isTarget}
+        let edges = []; // Holds edge objects {source, target, weight, isTarget}
+        let selectedNodeId = null;
+
+        // Simulation & Playback Control States
+        let isSimulating = false;
+        let isPaused = false;
+        let resolvePause = null;
+
+        // --- DOM Elements ---
+        const canvas = document.getElementById('nnCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
+        
+        const inpInputs = document.getElementById('inp-inputs');
+        const inpLayers = document.getElementById('inp-layers');
+        const hiddenLayersContainer = document.getElementById('hidden-layers-container');
+        const inpOutputs = document.getElementById('inp-outputs');
+        
+        const runPassBtn = document.getElementById('runPassBtn');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const stepBtn = document.getElementById('stepBtn');
+        const clearLogBtn = document.getElementById('clearLogBtn');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const loggerContent = document.getElementById('loggerContent');
+        const editorContainer = document.getElementById('editor-container');
+
+        function init() {
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Auto-update architecture on input change
+            inpInputs.addEventListener('input', buildNetworkFromUI);
+            inpOutputs.addEventListener('input', buildNetworkFromUI);
+            inpLayers.addEventListener('input', () => {
+                generateHiddenLayerInputs();
+                buildNetworkFromUI();
+            });
+            
+            // Playback Controls
+            runPassBtn.addEventListener('click', runForwardPass);
+            playPauseBtn.addEventListener('click', togglePause);
+            stepBtn.addEventListener('click', triggerStep);
+            
+            // Utilities
+            clearLogBtn.addEventListener('click', () => loggerContent.innerHTML = '');
+            themeToggleBtn.addEventListener('click', toggleTheme);
+            canvas.addEventListener('mousedown', handleCanvasClick);
+
+            // Initial Setup
+            generateHiddenLayerInputs();
+            buildNetworkFromUI();
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('light-mode');
+            themeToggleBtn.innerText = body.classList.contains('light-mode') ? '🌙' : '☀️';
+            drawNetwork();
+        }
+
+        function generateHiddenLayerInputs() {
+            const count = parseInt(inpLayers.value) || 0;
+            hiddenLayersContainer.innerHTML = '';
+            for (let i = 0; i < count; i++) {
+                const div = document.createElement('div');
+                div.className = 'control-group';
+                div.innerHTML = `
+                    <label style="padding-left: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">↳ Hidden ${i+1} Nodes</label>
+                    <input type="number" class="number-input hidden-layer-size" value="3" min="1" max="8">
+                `;
+                hiddenLayersContainer.appendChild(div);
+            }
+            
+            // Bind listeners to dynamically created inputs
+            document.querySelectorAll('.hidden-layer-size').forEach(inp => {
+                inp.addEventListener('input', buildNetworkFromUI);
+            });
+        }
+
+        function buildNetworkFromUI() {
+            if (isSimulating) return; // Prevent building while running
+
+            const numIn = parseInt(inpInputs.value) || 1;
+            const numOut = parseInt(inpOutputs.value) || 1;
+            
+            const hiddenInputs = document.querySelectorAll('.hidden-layer-size');
+            const hiddenSizes = Array.from(hiddenInputs).map(inp => parseInt(inp.value) || 1);
+
+            architecture = [numIn, ...hiddenSizes, numOut];
+            
+            initializeDataStructures();
+            resizeCanvas(); 
+            
+            selectedNodeId = null;
+            updateEditorPanel();
+        }
+
+        function initializeDataStructures() {
+            nodes = [];
+            edges = [];
+            let nodeIdCounter = 0;
+
+            for (let l = 0; l < architecture.length; l++) {
+                const nodeCount = architecture[l];
+                let layerType = l === 0 ? 'input' : (l === architecture.length - 1 ? 'output' : 'hidden');
+                
+                for (let i = 0; i < nodeCount; i++) {
+                    let label = layerType === 'input' ? `X${i+1}` : (layerType === 'output' ? `Y${i+1}` : `H${l}_${i+1}`);
+                    
+                    nodes.push({
+                        id: `node_${nodeIdCounter++}`,
+                        layer: l,
+                        index: i,
+                        type: layerType,
+                        label: label,
+                        bias: layerType === 'input' ? 0 : parseFloat((Math.random() * 2 - 1).toFixed(2)),
+                        value: layerType === 'input' ? parseFloat((Math.random()).toFixed(2)) : 0,
+                        preAct: 0,
+                        isTarget: false,
+                        x: 0, y: 0
+                    });
+                }
+            }
+
+            for (let l = 0; l < architecture.length - 1; l++) {
+                const currentLayerNodes = nodes.filter(n => n.layer === l);
+                const nextLayerNodes = nodes.filter(n => n.layer === l + 1);
+
+                currentLayerNodes.forEach(sourceNode => {
+                    nextLayerNodes.forEach(targetNode => {
+                        edges.push({
+                            source: sourceNode.id,
+                            target: targetNode.id,
+                            weight: parseFloat((Math.random() * 2 - 1).toFixed(2)),
+                            isTarget: false
+                        });
+                    });
+                });
+            }
+        }
+
+        function resizeCanvas() {
+            const rect = container.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+            
+            calculateCoordinates(rect.width, rect.height);
+            drawNetwork();
+        }
+
+        function calculateCoordinates(width, height) {
+            const layerCount = architecture.length;
+            const paddingX = Math.max(80, width * 0.1);
+            const usableWidth = width - (paddingX * 2);
+            const gapX = usableWidth / (layerCount - 1 || 1);
+
+            for (let l = 0; l < layerCount; l++) {
+                const layerNodes = nodes.filter(n => n.layer === l);
+                const nodeCount = layerNodes.length;
+                const paddingY = Math.max(50, height * 0.1);
+                const usableHeight = height - (paddingY * 2);
+                
+                const maxGapY = 90; 
+                let gapY = usableHeight / Math.max(1, nodeCount);
+                if (gapY > maxGapY) gapY = maxGapY;
+
+                const totalLayerHeight = gapY * (nodeCount - 1);
+                const startY = (height - totalLayerHeight) / 2;
+
+                const x = paddingX + (l * gapX);
+
+                layerNodes.forEach((node, i) => {
+                    node.x = x;
+                    node.y = startY + (i * gapY);
+                });
+            }
+        }
+
+        function getCSSVar(name) {
+            return getComputedStyle(document.body).getPropertyValue(name).trim();
+        }
+
+        function drawNetwork() {
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            ctx.clearRect(0, 0, width, height);
+
+            const cBg = getCSSVar('--node-bg');
+            const cInput = getCSSVar('--node-input');
+            const cHidden = getCSSVar('--node-hidden');
+            const cOutput = getCSSVar('--node-output');
+            const cEdgePos = getCSSVar('--edge-pos');
+            const cEdgeNeg = getCSSVar('--edge-neg');
+            const cHighlight = getCSSVar('--highlight-node');
+            const cGlow = getCSSVar('--highlight-glow');
+            const cText = getCSSVar('--text-main');
+            const cTextMuted = getCSSVar('--text-muted');
+
+            // Draw Edges
+            edges.forEach(edge => {
+                const src = nodes.find(n => n.id === edge.source);
+                const tgt = nodes.find(n => n.id === edge.target);
+                
+                ctx.beginPath();
+                ctx.moveTo(src.x, src.y);
+                ctx.lineTo(tgt.x, tgt.y);
+                
+                if (edge.isTarget) {
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = cHighlight;
+                    ctx.shadowColor = cGlow;
+                    ctx.shadowBlur = 8;
+                } else {
+                    ctx.lineWidth = Math.max(0.5, Math.abs(edge.weight) * 2.5);
+                    ctx.strokeStyle = edge.weight >= 0 ? cEdgePos : cEdgeNeg;
+                    ctx.globalAlpha = 0.3;
+                    ctx.shadowBlur = 0;
+                }
+                
+                ctx.stroke();
+                ctx.globalAlpha = 1.0;
+                ctx.shadowBlur = 0;
+            });
+
+            // Draw Nodes
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            nodes.forEach(node => {
+                const isSelected = selectedNodeId === node.id;
+                
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 20, 0, Math.PI * 2);
+                ctx.fillStyle = cBg;
+                ctx.fill();
+
+                let bColor = node.type === 'input' ? cInput : (node.type === 'hidden' ? cHidden : cOutput);
+                
+                ctx.lineWidth = isSelected ? 4 : 2;
+                ctx.strokeStyle = node.isTarget ? cHighlight : bColor;
+                
+                if (node.isTarget || isSelected) {
+                    ctx.shadowColor = node.isTarget ? cGlow : bColor;
+                    ctx.shadowBlur = 12;
+                }
+                
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Labels Above
+                ctx.fillStyle = cText;
+                ctx.font = "bold 12px sans-serif";
+                ctx.fillText(node.label, node.x, node.y - 32);
+
+                // Values inside node
+                ctx.font = "11px monospace";
+                ctx.fillStyle = node.value === 0 && node.type !== 'input' ? cTextMuted : cText;
+                let displayVal = Number.isInteger(node.value) ? node.value.toString() : node.value.toFixed(2);
+                ctx.fillText(displayVal, node.x, node.y);
+                
+                // FIXED: Draw Bias indicator safely below the node to prevent overlapping
+                if (node.type !== 'input') {
+                    ctx.font = "10px sans-serif";
+                    ctx.fillStyle = cTextMuted;
+                    ctx.fillText(`b: ${node.bias}`, node.x, node.y + 32); 
+                }
+            });
+        }
+
+        function handleCanvasClick(e) {
+            if (isSimulating) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            let clickedNode = null;
+            for (let node of nodes) {
+                const dist = Math.sqrt(Math.pow(x - node.x, 2) + Math.pow(y - node.y, 2));
+                if (dist <= 25) { 
+                    clickedNode = node;
+                    break;
+                }
+            }
+
+            selectedNodeId = clickedNode ? clickedNode.id : null;
+            updateEditorPanel();
+            drawNetwork();
+        }
+
+        function updateEditorPanel() {
+            if (!selectedNodeId) {
+                editorContainer.innerHTML = `<div class="editor-empty">Select a node on the canvas to view and edit its properties.</div>`;
+                return;
+            }
+
+            const node = nodes.find(n => n.id === selectedNodeId);
+            let html = `<div style="margin-bottom: 1rem;">
+                <h3 style="color: var(--accent); margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; font-size: 0.95rem;">
+                    Node: ${node.label} <span style="font-size: 0.75rem; color: var(--text-muted); float: right;">(${node.type})</span>
+                </h3>
+            </div>`;
+
+            if (node.type === 'input') {
+                html += `
+                    <div class="control-group">
+                        <label>Input Value (X)</label>
+                        <input type="number" id="edit-node-val" class="number-input weight-input" step="0.1" value="${node.value}">
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="control-group">
+                        <label>Node Bias (b)</label>
+                        <input type="number" id="edit-node-bias" class="number-input weight-input" step="0.1" value="${node.bias}">
+                    </div>
+                    
+                    <div style="margin-top: 1.2rem;">
+                        <h4 style="font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-muted);">Incoming Weights (w)</h4>
+                `;
+                
+                const incomingEdges = edges.filter(e => e.target === node.id);
+                incomingEdges.forEach((edge) => {
+                    const srcNode = nodes.find(n => n.id === edge.source);
+                    html += `
+                        <div class="weight-row">
+                            <label>w<sub>${srcNode.label}→${node.label}</sub></label>
+                            <input type="number" class="number-input weight-input edit-weight" data-edge-idx="${edges.indexOf(edge)}" step="0.1" value="${edge.weight}">
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            }
+
+            editorContainer.innerHTML = html;
+
+            if (node.type === 'input') {
+                document.getElementById('edit-node-val').addEventListener('input', (e) => {
+                    node.value = parseFloat(e.target.value) || 0;
+                    drawNetwork();
+                });
+            } else {
+                document.getElementById('edit-node-bias').addEventListener('input', (e) => {
+                    node.bias = parseFloat(e.target.value) || 0;
+                    drawNetwork();
+                });
+                
+                document.querySelectorAll('.edit-weight').forEach(inp => {
+                    inp.addEventListener('input', (e) => {
+                        const edgeIdx = parseInt(e.target.getAttribute('data-edge-idx'));
+                        edges[edgeIdx].weight = parseFloat(e.target.value) || 0;
+                        drawNetwork();
+                    });
+                });
+            }
+        }
+
+        function logMessage(msg, type='log-info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = msg;
+            loggerContent.appendChild(entry);
+            loggerContent.scrollTop = loggerContent.scrollHeight;
+        }
+
+        // Helper to handle pausing and stepping
+        async function waitStep(ms) {
+            // Normal delay if playing
+            if (!isPaused) {
+                await new Promise(r => setTimeout(r, ms));
+            }
+            // If paused (or just took a step), wait until resumed/stepped
+            if (isPaused) {
+                await new Promise(r => { resolvePause = r; });
+            }
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            if (isPaused) {
+                playPauseBtn.innerHTML = "▶ Resume";
+                playPauseBtn.classList.replace('btn-warn', 'btn-outline');
+            } else {
+                playPauseBtn.innerHTML = "⏸ Pause";
+                playPauseBtn.classList.replace('btn-outline', 'btn-warn');
+                if (resolvePause) {
+                    resolvePause();
+                    resolvePause = null;
+                }
+            }
+        }
+
+        function triggerStep() {
+            isPaused = true; // Ensure it stays paused after executing one step
+            playPauseBtn.innerHTML = "▶ Resume";
+            playPauseBtn.classList.replace('btn-warn', 'btn-outline');
+            if (resolvePause) {
+                resolvePause();
+                resolvePause = null;
+            }
+        }
+
+        async function runForwardPass() {
+            if (isSimulating) return;
+            
+            // Setup Simulation UI State
+            isSimulating = true;
+            isPaused = false;
+            
+            runPassBtn.disabled = true;
+            inpInputs.disabled = true;
+            inpLayers.disabled = true;
+            inpOutputs.disabled = true;
+            
+            playPauseBtn.disabled = false;
+            stepBtn.disabled = false;
+            playPauseBtn.innerHTML = "⏸ Pause";
+            playPauseBtn.classList.replace('btn-outline', 'btn-warn');
+
+            loggerContent.innerHTML = ''; // Clear prior logs
+
+            // Clear previous calculations (hidden and output nodes)
+            nodes.forEach(n => {
+                if (n.type !== 'input') n.value = 0;
+            });
+            drawNetwork();
+
+            logMessage('<b>=== Starting Forward Pass Execution ===</b>', 'log-info');
+            
+            let inputNodes = nodes.filter(n => n.layer === 0);
+            let inpsStr = inputNodes.map(n => `<b>${n.label}</b>=${n.value}`).join(' | ');
+            logMessage(`Input Data: [ ${inpsStr} ]`, 'log-info');
+            
+            await waitStep(800);
+
+            // Layer by Layer Calculation
+            for (let l = 1; l < architecture.length; l++) {
+                let currentLayerNodes = nodes.filter(n => n.layer === l);
+                let layerName = l === architecture.length - 1 ? 'Output Layer' : `Hidden Layer ${l}`;
+                
+                logMessage(`<br><b>--- Processing ${layerName} ---</b>`, 'log-info');
+
+                // Node by Node Calculation
+                for (let node of currentLayerNodes) {
+                    // Highlight Active Node and Incoming Edges
+                    node.isTarget = true;
+                    let incomingEdges = edges.filter(e => e.target === node.id);
+                    incomingEdges.forEach(e => e.isTarget = true);
+                    drawNetwork();
+
+                    let sum = node.bias;
+                    let formulaDisplay = [];
+                    let numericDisplay = [];
+
+                    logMessage(`Calculating Node <b>${node.label}</b>:`, 'log-info');
+                    await waitStep(400);
+
+                    // Compute Weighted Sum
+                    for (let edge of incomingEdges) {
+                        let sourceNode = nodes.find(n => n.id === edge.source);
+                        let w = edge.weight;
+                        let x = sourceNode.value;
+                        let val = w * x;
+                        sum += val;
+
+                        formulaDisplay.push(`(w<sub>${sourceNode.label}</sub>&times;${sourceNode.label})`);
+                        numericDisplay.push(`(${w}&times;${x})`);
+                    }
+
+                    // Display Mathematical Equation
+                    let zVal = sum.toFixed(3);
+                    let eq1 = `Z = ` + formulaDisplay.join(' + ') + ` + bias`;
+                    let eq2 = `Z = ` + numericDisplay.join(' + ') + ` + (${node.bias})`;
+                    
+                    logMessage(`${eq1}<br>${eq2}<br><b>Z = ${zVal}</b>`, 'log-math');
+                    await waitStep(600);
+
+                    // Apply Activation Function (ReLU)
+                    let activation = Math.max(0, sum);
+                    node.value = activation;
+                    
+                    let actFormat = activation.toFixed(3);
+                    logMessage(`Applying ReLU Activation ( max(0, Z) ):<br>Result = max(0, ${zVal}) = <b style="font-size:1.1em">${actFormat}</b>`, 'log-result');
+                    
+                    drawNetwork();
+                    await waitStep(800);
+
+                    // Remove Highlights after processing
+                    node.isTarget = false;
+                    incomingEdges.forEach(e => e.isTarget = false);
+                    drawNetwork();
+                }
+            }
+
+            // Final Output Array
+            let outNodes = nodes.filter(n => n.layer === architecture.length - 1);
+            let outStr = outNodes.map(n => `<b>${n.label}</b>=${n.value.toFixed(3)}`).join(' | ');
+            logMessage(`<br><b>=== Forward Pass Complete ===</b><br>Final Network Output: [ ${outStr} ]`, 'log-info');
+
+            // Reset UI State post-simulation
+            isSimulating = false;
+            runPassBtn.disabled = false;
+            inpInputs.disabled = false;
+            inpLayers.disabled = false;
+            inpOutputs.disabled = false;
+            
+            playPauseBtn.disabled = true;
+            stepBtn.disabled = true;
+            playPauseBtn.innerHTML = "⏸ Pause";
+            playPauseBtn.classList.replace('btn-warn', 'btn-outline');
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
